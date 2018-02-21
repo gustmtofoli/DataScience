@@ -1,11 +1,7 @@
 from math import sin, cos, sqrt, atan2, radians
 import gmplot
 
-# Apucarana: -23.5515, -51.4614
-# Maringa: -23.4209995,-51.9330558
-
 # gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40000, marker=False) # circles
-# gmap.scatter(marker_lats, marker_lngs, 'k', marker=True) # corner markers
 
 def printDistancesMatrix(distances):
 	for k in range(len(distances)):
@@ -32,37 +28,32 @@ def getAllDistances(lats, longs):
 			distances[i][j] = d
 	return distances
 
-def getNearbyAdresses(distances, lats, longs):
+def getNearbyAdresses(distances, lats, longs, distance_km):
+	n = len(distances)
 	latitudes = []
 	longitudes = []
-	for i in range(len(distances)):
-		for j in range(len(distances)):
-			if j > i:
-				if distances[i][j] < 50:
-					latitudes.append(lats[i])
-					latitudes.append(lats[j])
-					longitudes.append(longs[i])
-					longitudes.append(longs[j])
+	for i in range(n):
+		for j in range(n):
+			if j > i and distances[i][j] < distance_km:
+				latitudes.append(lats[i])
+				latitudes.append(lats[j])
+				longitudes.append(longs[i])
+				longitudes.append(longs[j])
 	return latitudes, longitudes
 
-def markLineBetweenNearbyAdresses(distances, lats, longs):
-	latitudes, longitudes = getNearbyAdresses(distances=distances, lats=lats, longs=longs)
+def markLineBetweenNearbyAdresses(gmap, distances, lats, longs, distance_km):
+	latitudes, longitudes = getNearbyAdresses(distances=distances, lats=lats, longs=longs, distance_km=distance_km)
 	gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=5) # line between corners
 
-def plotMarkers(lats, longs):
+def plotMarkers(gmap, lats, longs):
 	for i in range(len(lats)):
 		gmap.marker(lats[i], longs[i], title="Pessoa "+str(i+1))
 
-lats = [-23.5515, -23.4209995, -23.3209995, -23.65515]
-longs = [-51.4614, -51.9330558, -51.3614, -51.59330558]
-
-distances = [[0 for i in range(len(lats))] for i in range(len(lats))]
-distances = getAllDistances(lats, longs)
-
-gmap = gmplot.GoogleMapPlotter(-23.5515, -51.4614, 10)
-gmap.heatmap(lats, longs)
-plotMarkers(lats, longs)
-markLineBetweenNearbyAdresses(distances, lats, longs)
-gmap.draw("mymap.html")
-
-printDistancesMatrix(distances)
+def buildMapWithConditionalMarkers(map_name, lats, longs, distance_km): 
+	gmap = gmplot.GoogleMapPlotter(-23.5515, -51.4614, 10) # TODO definir zoom, latitude e longitude automaticamente
+	distances = getAllDistances(lats, longs)
+	gmap.heatmap(lats, longs)
+	plotMarkers(gmap, lats, longs)
+	markLineBetweenNearbyAdresses(gmap, distances, lats, longs, distance_km)
+	gmap.draw(map_name+".html")
+	return gmap, distances 
